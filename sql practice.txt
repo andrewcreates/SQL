@@ -1,0 +1,731 @@
+SELECT
+  DATE(created_at) as day,
+  description,
+  COUNT(name)
+FROM events
+WHERE name = 'trained'
+GROUP BY
+  day,
+  description;
+
+
+SELECT 
+  CASE WHEN SUM(number1) % 2 = 0 THEN MAX(number1)
+    WHEN SUM(number1) % 2 <> 0 THEN MIN(number1) END
+    as number1,
+  CASE WHEN SUM(number2) % 2 = 0 THEN MAX(number2)
+    WHEN SUM(number2) % 2 <> 0 THEN MIN(number2) END
+    as number2
+FROM numbers;
+
+
+CREATE VIEW members_approved_for_voucher AS
+SELECT 
+  s.department_id,
+  s.member_id AS id,
+  m.name AS name,
+  m.email AS email,
+  SUM(p.price) AS spending
+FROM sales s 
+  JOIN members m ON s.member_id = m.id
+  JOIN products p ON s.product_id = p.id
+  JOIN departments d ON s.department_id = d.id
+WHERE s.department_id IN (1,2,3)
+GROUP BY s.member_id, m.name, m.email, s.department_id
+ORDER BY s.member_id;
+  
+
+SELECT id, name, email, SUM(spending) AS total_spending
+FROM members_approved_for_voucher
+GROUP BY id, name, email
+HAVING SUM(spending) > 1000;
+
+Notes: can't have aliases in WHERE clauses - use HAVING instead.
+
+
+WITH RECURSIVE employee_levels AS (
+  SELECT
+    1 as level, id, first_name, last_name, manager_id
+  FROM
+    employees
+  WHERE
+    manager_id IS NULL
+  UNION
+    SELECT
+      level + 1, e.id, e.first_name, e.last_name, e.manager_id
+    FROM
+      employees e
+    INNER JOIN employee_levels el ON el.id = e.manager_id)
+SELECT *
+FROM employee_levels;
+
+
+WITH RECURSIVE factorial (n, factorial)
+  AS (SELECT 0, cast(1 as BIGINT)
+  UNION ALL
+  SELECT N + 1, (N + 1) * factorial
+  FROM factorial
+  WHERE N < 16
+  )
+  
+SELECT n, factorial as fact
+FROM factorial;
+
+
+SELECT 
+  md5 || REPEAT('1', (char_length(sha256) - char_length(md5))) as md5, 
+  REPEAT('0', (char_length(sha256) - char_length(sha1))) || sha1 as sha1, 
+  sha256
+FROM encryption
+Codewars:
+select RPAD(md5, length(sha256), '1') md5,
+       LPAD(sha1, length(sha256), '0') sha1,
+       sha256
+  from encryption
+
+
+Notes:
+IPv4- 4 8 bit sections, each considered a byte, totalling 32-bits and (2^32, 4,294,967,296 addresses)
+Convert IPV4 to binary, then to decimal format. Converting to decimal (each 1 is worth 2, then raised to its position in the string starting from 7, end with 0)
+Using binary values: IP: a:b:c:d = a(256)^3 + b(256)^2 + c(256)^1 + d
+E.g. 217.198.234.170 --> 1st section- 217 = 11011001 (binary) = (2^7) + (2^6) + (0^5) + (2^4) + (2^3) + (0^2) + (0^1) + (2^0) = 3640655872
+
+SELECT id, ((last::inet - '0.0.0.0'::inet) - (first::inet - '0.0.0.0'::inet)) as ips_between
+FROM ip_addresses;
+
+
+
+select t1.entry_time as when_happened, COUNT(t2.*) as visits_count
+from visits t1
+inner join visits t2 on t1.entry_time::timestamp <@ tsrange(t2.entry_time, t2.exit_time, '[)') 
+GROUP BY t1.entry_time
+ORDER BY visits_count DESC, when_happened ASC
+LIMIT 1;
+
+Codewars solution:
+select v1.entry_time when_happened, count(*) visits_count 
+  from visits v1 
+  join visits v2 on v1.entry_time >= v2.entry_time and v1.entry_time < v2.exit_time
+ group by v1.id
+ order by visits_count desc
+ limit 1
+
+
+SELECT *
+FROM numbers
+ORDER BY RANDOM()
+Notes: Fetches all rows then selects one at random, can be slow on large datasets
+
+
+Notes: ASCII character set can give numeric values for alphabet.
+SELECT CASE
+  WHEN res ISNULL OR res % 26 = 0 THEN 'z'
+  WHEN res > 26 THEN CHR((res % 26) + 96)
+  ELSE CHR((res::int) + 96) END as letter
+FROM
+  (SELECT SUM(ASCII(letter)-96)::int as res
+  FROM letters) letters
+
+
+SELECT   
+  id,
+  COALESCE(NULLIF(name,''),'[product name not found]') as name,
+  price,
+  COALESCE(NULLIF(card_name,''),'[card name not found]') as card_name,
+  card_number,
+  transaction_date
+FROM eusales
+WHERE price > 50 and price is not null;
+ 
+SELECT 
+  project,
+  commits,
+  contributors,
+  REGEXP_REPLACE(address,'[[:digit:]]','!','g') as address
+FROM repositories;
+ 
+SELECT
+  COUNT(name) as unique_products,
+  producer
+FROM products
+GROUP BY
+  producer
+ORDER BY
+  COUNT(name) DESC,
+  producer ASC;
+ 
+ 
+SELECT 
+  j.jobs_title,
+  SUM(j.salary) / COUNT(p) as average_salarys,
+  COUNT(p.id) as total_peoples,
+  SUM(j.salary),2 as total_salarys
+  FROM people p
+    JOIN job j
+  GROUP BY j.job_title
+  ORDER BY total_salarys
+ 
+SELECT 
+  j.job_title,
+  CAST(ROUND(SUM(j.salary) / COUNT(p),2) as FLOAT) as average_salary,
+  COUNT(p.id) as total_people,
+  CAST(ROUND(SUM(j.salary),2) as FLOAT) as total_salary
+FROM people p
+LEFT JOIN job j ON p.id = j.people_id
+GROUP BY j.job_title
+ORDER BY average_salary DESC
+ 
+ 
+SELECT
+  p.id, p.name, COUNT(s.sale) as sale_count,
+  RANK () OVER (ORDER BY COUNT(s.sale) DESC) as sale_rank
+FROM
+  people p
+JOIN sales s ON p.id = s.people_id
+GROUP BY p.id, p.name
+ 
+ 
+SELECT 'EU' as location, *
+FROM eusales
+WHERE price > 50
+UNION ALL
+SELECT 'US' as location, *
+FROM ussales
+WHERE price > 50
+ORDER BY location DESC, id ASC
+ 
+ 
+SELECT category_id, category, title, views, post_id
+FROM(
+  SELECT 
+    c.id as category_id, c.category, p.title, p.views, p.id as post_id,
+    ROW_NUMBER() OVER (PARTITION BY c.category ORDER BY p.views DESC, p.id ASC) as r
+  FROM categories c
+  LEFT OUTER JOIN posts p ON c.id = p.category_id
+  ORDER BY c.category ASC, p.views DESC, p.id ASC) x
+WHERE x.r <= 2
+ 
+ 
+SELECT RANK() OVER (ORDER BY SUM(points) DESC),
+  COALESCE(NULLIF(clan,''), '[no clan specified]') AS clan,
+  SUM(points) AS total_points,
+  COUNT(*) AS total_people
+FROM people 
+GROUP BY clan
+ORDER BY total_points DESC
+ 
+ 
+CREATE FUNCTION divis (n integer, x integer, y integer) 
+  RETURNS boolean AS $func$
+BEGIN
+  IF n%x = 0 AND n%y = 0 THEN
+    RETURN TRUE;
+  ELSE
+    RETURN FALSE;
+  END IF;
+END
+$func$ LANGUAGE plpgsql;
+ 
+select id, divis(n, x, y) as res from kata
+ 
+Codewars:
+SELECT id, n % x = 0 AND n % y = 0 AS res FROM kata
+
+
+SELECT t.month, SUM(t.total_count)::integer as total_count, 
+SUM(t.total_amount) as total_amount, 
+SUM(m.mike_count)::integer as mike_count, 
+SUM(m.mike_amount) as mike_amount,
+SUM(j.jon_count)::integer as jon_count, 
+SUM(j.jon_amount) as jon_amount
+FROM (SELECT EXTRACT(month from payment_date) as month, 
+  COUNT(payment_id) as total_count, 
+  SUM(amount) as total_amount
+  FROM payment
+  GROUP BY month
+  ORDER BY month)t
+JOIN (SELECT EXTRACT(month from payment_date) as month, 
+  COUNT(payment_id) as mike_count, 
+  SUM(amount) as mike_amount
+  FROM payment
+  WHERE staff_id = 1
+  GROUP BY month
+  ORDER BY month)m
+    ON t.month = m.month
+JOIN (SELECT EXTRACT(month from payment_date) as month, 
+  COUNT(payment_id) as jon_count, 
+  SUM(amount) as jon_amount
+  FROM payment
+  WHERE staff_id = 2
+  GROUP BY month
+  ORDER BY month)j
+    ON t.month = j.month
+GROUP BY t.month
+ORDER BY t.month
+
+Codewars: Use filters!!
+SELECT
+  EXTRACT(MONTH FROM payment_date)        AS month,
+  COUNT(*)                                AS total_count,
+  SUM(amount)                             AS total_amount,
+  COUNT(*)    FILTER (WHERE staff_id = 1) AS mike_count,
+  SUM(amount) FILTER (WHERE staff_id = 1) AS mike_amount,
+  COUNT(*)    FILTER (WHERE staff_id = 2) AS jon_count,
+  SUM(amount) FILTER (WHERE staff_id = 2) AS jon_amount
+FROM payment
+GROUP BY month
+ORDER BY month;
+
+
+SELECT f.title
+FROM film_actor fa
+JOIN film f ON f.film_id = fa.film_id
+WHERE actor_id = 105
+INTERSECT
+SELECT f.title
+FROM film_actor fa
+JOIN film f ON f.film_id = fa.film_id
+WHERE actor_id = 122
+ORDER BY title
+
+Codewars: Single join, use WHERE ... IN (...)
+SELECT f.title
+FROM film f
+JOIN film_actor fa on fa.film_id = f.film_id
+WHERE fa.actor_id IN (105,122)
+GROUP BY f.film_id
+HAVING COUNT(*) = 2
+ORDER BY f.title ASC
+
+
+ACT: 27, 60
+WITH actor_duo AS(
+  SELECT DISTINCT t1.actor_id act1, t2.actor_id act2, COUNT(t1.film_id)
+  FROM film_actor t1
+  INNER JOIN film_actor t2 ON t1.film_id = t2.film_id AND t1.actor_id != t2.actor_id
+  GROUP BY act1, act2
+  ORDER BY COUNT(t1.film_id) DESC, act1, act2
+  LIMIT 1)
+
+SELECT actor_id, concat(first_name, ' ', last_name) first_actor
+FROM actor a
+JOIN actor_duo d ON d.act1 = a.actor_id
+WHERE actor_id = act1
+
+SELECT f.title, array_agg(fa.actor_id ORDER BY fa.actor_id ASC)
+FROM film f
+JOIN film_actor fa ON fa.film_id = f.film_id
+WHERE actor_id = 27 OR actor_id = 60
+GROUP BY f.film_id
+HAVING array_length(array_agg(fa.actor_id),1) > 1
+
+SELECT fa.actor_id, fa.film_id, concat(a.first_name, ' ', a.last_name), f.title
+FROM film_actor fa
+INNER JOIN actor a ON fa.actor_id = a.actor_id
+INNER JOIN film f ON fa.film_id = f.film_id
+
+Codewars solution:
+with top_pair as (
+  select a1.actor_id as id1, a2.actor_id as id2
+  from film_actor a1
+    inner join film_actor a2 on a1.film_id=a2.film_id
+  where a1.actor_id <> a2.actor_id
+  group by a1.actor_id, a2.actor_id
+  order by count(a1.film_id) desc
+  limit 1
+)
+select
+(select first_name || ' ' || last_name from actor where actor_id = tp.id1) as first_actor,
+(select first_name || ' ' || last_name from actor where actor_id = tp.id2) as second_actor,
+  f.title as title
+from top_pair tp
+    inner join film_actor fa1 on tp.id1 = fa1.actor_id
+    inner join film_actor fa2 on tp.id2 = fa2.actor_id
+    inner join film f on fa1.film_id=f.film_id and fa2.film_id=f.film_id
+
+
+SELECT c.id category_id, c.category, p.title, p.views, p.id post_id
+FROM (SELECT * FROM categories ORDER BY category) c
+LEFT JOIN LATERAL 
+  (SELECT * 
+    FROM posts 
+    WHERE posts.category_id = c.id
+    ORDER BY posts.views DESC, posts.id
+    LIMIT 2) p
+  ON p.category_id = c.id
+ORDER BY c.category
+
+SELECT c.id AS category_id, c.category, p.title, p.views, p.id AS post_id
+FROM categories c
+LEFT JOIN LATERAL (
+  SELECT *
+  FROM posts
+  WHERE posts.category_id = c.id
+  ORDER BY views DESC, id
+  LIMIT 2) p
+ON p.category_id = c.id  
+ORDER BY category, p.views DESC, p.id
+
+
+
+Codewars: Use select inside function,
+CREATE FUNCTION weekdays(_start date, _finish date) 
+returns integer AS $$
+
+  select count(*) filter (where extract(dow from g.d) between 1 and 5)::int as weekdays
+  from generate_series(least(_start, _finish), greatest(_start, _finish), interval '1 day') as g(d);
+
+$$ language sql;
+
+
+
+with running_total as (
+  SELECT DATE(created_at) date, COUNT(*) count
+  FROM posts
+  GROUP BY DATE(created_at)
+  ORDER BY DATE(created_at) ASC)
+
+SELECT date, count, 
+  sum(count) over (ORDER BY date ASC rows between unbounded preceding and current row):: integer total
+FROM running_total
+
+Codewars:
+SELECT
+  CREATED_AT::DATE AS DATE,
+  COUNT(CREATED_AT) AS COUNT,
+  SUM(COUNT(CREATED_AT)) OVER (ORDER BY CREATED_AT::DATE ROWS UNBOUNDED PRECEDING)::INT AS TOTAL
+FROM
+  POSTS
+GROUP BY
+  CREATED_AT::DATE
+
+
+
+WITH new_posts AS(
+SELECT 
+  date_trunc('month',CREATED_AT)::date AS date,
+  COUNT(CREATED_AT) AS count,
+  COUNT(CREATED_AT) - LAG(COUNT(CREATED_AT),1) OVER (ORDER BY date_trunc('month',CREATED_AT)::date)::decimal as diff,
+  LAG(COUNT(CREATED_AT),1) OVER (ORDER BY date_trunc('month',CREATED_AT)::date)::decimal as prev
+FROM posts
+GROUP BY date_trunc('month',CREATED_AT)
+ORDER BY date_trunc('month',CREATED_AT))
+
+SELECT date,
+  count,
+  to_char((100*diff/prev),'FM990.0') || '%' AS percent_growth
+FROM new_posts
+ORDER BY date
+
+Codewars: use round to round to decimal points
+select date_trunc('month', created_at)::date as date
+  , count(*) as count
+  , round(((100.0 / (lag(count(*)) over (order by date_trunc('month', created_at)::date asc))) * count(*)) -100, 1) || '%' as percent_growth 
+from posts 
+group by date
+order by date asc
+
+
+CREATE EXTENSION tablefunc;
+
+SELECT *
+FROM CROSSTAB($$
+  SELECT p.name, d.detail, COUNT(d.*)::int
+  FROM products p
+  JOIN details d ON p.id = d.product_id
+  GROUP BY p.name, d.detail
+  ORDER BY p.name, CASE d.detail 
+    WHEN 'good' THEN 1
+    WHEN 'ok' THEN 2
+    WHEN 'bad' THEN 3
+    END
+  $$)
+AS final_result("name" TEXT, "good" int, "ok" int, "bad" int);
+
+Codwars: Can also assign explicit sort order with values list after initial query
+select *
+from crosstab(
+  'select p.name, d.detail, count(1)::int as value
+  from products p
+    inner join details d
+      on p.id = d.product_id
+  group by 1, 2
+  order by 1, 2',
+  $$values ('good'), ('ok'), ('bad')$$)
+  as (name text, good int, ok int, bad int)
+order by name
+
+
+SELECT sail.senshi_name AS sailor_senshi,
+  sail.real_name_jpn AS real_name,
+  c.name AS cat,
+  s.school AS school
+FROM sailorsenshi AS sail
+LEFT JOIN cats AS c on c.id = sail.cat_id
+LEFT JOIN schools AS s on s.id = sail.school_id;
+
+
+SELECT INITCAP(firstname || ' ' || lastname) AS shortlist
+FROM elves
+WHERE firstname LIKE '%tegil%' OR lastname LIKE '%astar%';
+
+
+SELECT id,
+  CASE when base%factor = 0 then true else false END AS res
+FROM kata;
+CODEWARS: select id, base % factor = 0 as res from kata
+
+
+SELECT t.*, b.legs, b.tails,
+	CASE WHEN t.heads > t.arms OR b.tails > b.legs THEN 'BEAST' ELSE 'WEIRDO' END AS species
+FROM top_half t
+JOIN bottom_half b ON b.id = t.id
+ORDER BY species;
+
+
+select bound - bound % divisor as res from max_multiple
+
+
+SELECT f.name, SUM(f.won) AS won, SUM(f.lost) AS lost
+FROM fighters f
+JOIN winning_moves wm ON wm.id = f.move_id
+WHERE wm.move NOT IN ('Hadoken','Shouoken','Kikoken')
+GROUP BY f.name
+ORDER BY SUM(f.won) DESC
+LIMIT 6;
+
+
+WITH RECURSIVE factorial (n,f) AS(
+  CASE WHEN n = 0 
+    THEN SELECT 0, 1
+    ELSE
+      SELECT 1, CAST(1 as BIGINT)
+        UNION ALL
+      SELECT N+1, (N+1) * f
+        FROM factorial
+      WHERE N < 17)
+  END
+
+SELECT n,f
+FROM factorial;
+
+
+
+CREATE VIEW members_approved_for_voucher AS
+
+SELECT m.id, m.name, m.email, sum(p.price) AS total_spending
+FROM sales s
+
+JOIN products p ON p.id = s.product_id
+
+RIGHT JOIN (SELECT s.department_id, sum(p.price)
+FROM sales s
+JOIN products p ON p.id = s.product_id
+GROUP BY s.department_id
+HAVING sum(p.price) > 10000) depts ON depts.department_id = s.department_id
+
+JOIN members m ON m.id = s.member_id
+
+GROUP BY m.id, m.name, m.email
+HAVING sum(p.price) > 1000
+ORDER BY m.id
+  ;
+  
+SELECT *
+FROM members_approved_for_voucher
+
+Notes: view queries don't need to be in parenthesis. End view with semicolon.
+
+
+
+SELECT e.employee_id,
+       e.first_name,
+       e.last_name,
+       d.department_name,
+       e.salary AS old_salary,
+       e.salary * (1 + pctIncrease(e.department_id)) AS new_salary
+  FROM employees   e,
+       departments d
+ WHERE e.department_id = d.department_id
+ ORDER BY 1;
+
+
+SELECT e.employee_id,
+       e.first_name,
+       e.last_name,
+       d.department_name,
+       e.salary AS old_salary,
+       e.salary * d.pctinc AS new_salary
+  FROM employees   e,
+       (SELECT department_id,
+               department_name,
+               1 + pctIncrease(department_id) pctinc
+          FROM departments) d
+ WHERE e.department_id = d.department_id
+ ORDER BY 1;
+
+Notes: it's slow to calculate the function for every person. Use the function on a department table, then apply those department calculations to each person.
+
+
+
+SELECT m.firstname || ' ' || m.surname AS member,
+	f.name AS facility,
+	CASE
+		WHEN b.slots * f.guestcost > 30 AND m.firstname = 'GUEST' THEN b.slots * f.guestcost
+		WHEN b.slots * f.membercost > 30 AND m.firstname != 'GUEST' THEN b.slots * f.membercost
+	END AS cost
+FROM cd.members m
+JOIN cd.bookings b ON m.memid = b.memid
+JOIN cd.facilities f ON b.facid = f.facid
+WHERE date(b.starttime) = '2012-09-14'
+	AND (CASE
+		WHEN b.slots * f.guestcost > 30 AND m.firstname = 'GUEST' THEN b.slots * f.guestcost
+		WHEN b.slots * f.membercost > 30 AND m.firstname != 'GUEST' THEN b.slots * f.membercost
+	END) IS NOT NULL
+ORDER BY cost DESC NULLS LAST
+
+
+
+select distinct mems.firstname || ' ' ||  mems.surname as member,
+	(select recs.firstname || ' ' || recs.surname as recommender 
+		from cd.members recs 
+		where recs.memid = mems.recommendedby)
+from 
+	cd.members mems
+order by member;  
+
+
+
+SELECT f.name, 
+	SUM(CASE
+		WHEN b.memid = 0 THEN b.slots * f.guestcost
+		WHEN b.memid != 0 THEN b.slots * f.membercost
+	END) AS revenue
+FROM cd.facilities f
+JOIN cd.bookings b ON b.facid = f.facid
+GROUP BY f.name
+ORDER BY revenue
+
+
+
+SELECT *
+FROM
+  (SELECT f.name, 
+	  SUM(CASE
+		  WHEN b.memid = 0 THEN b.slots * f.guestcost
+		  WHEN b.memid != 0 THEN b.slots * f.membercost
+	  END) AS revenue
+  FROM cd.facilities f
+  JOIN cd.bookings b ON b.facid = f.facid
+  GROUP BY f.name
+  ORDER BY revenue) rev
+ WHERE rev.revenue < 1000
+
+
+
+with sum as (select facid, sum(slots) as totalslots
+	from cd.bookings
+	group by facid
+)
+select facid, totalslots 
+	from sum
+	where totalslots = (select max(totalslots) from sum);
+
+
+
+SELECT b.facid, date_part('month',b.starttime) AS month, sum(b.slots) AS slots
+FROM cd.bookings b
+WHERE date_part('year', b.starttime) = 2012
+GROUP BY ROLLUP (b.facid, date_part('month',b.starttime))
+ORDER BY b.facid, month;
+
+
+
+SELECT b.facid, f.name, ROUND(SUM(b.slots)/2::numeric,2) AS TotalHours
+FROM cd.bookings b
+JOIN cd.facilities f ON b.facid = f.facid
+GROUP BY b.facid, f.name
+ORDER BY b.facid;
+
+
+
+SELECT m.surname, m.firstname, m.memid, MIN(b.starttime)
+FROM cd.members m
+JOIN cd.bookings b ON m.memid = b.memid
+WHERE date(b.starttime) >= '2012-09-01'
+GROUP BY m.surname, m.firstname, m.memid
+ORDER BY m.memid;
+
+
+
+select count(*) over(), firstname, surname
+	from cd.members
+order by joindate;
+
+
+
+select name, rank from (
+	select facs.name as name, rank() over (order by sum(case
+				when memid = 0 then slots * facs.guestcost
+				else slots * membercost
+			end) desc) as rank
+		from cd.bookings bks
+		inner join cd.facilities facs
+			on bks.facid = facs.facid
+		group by facs.name
+	) as subq
+	where rank <= 3
+order by rank;  
+
+
+
+select name, case when class=1 then 'high'
+		when class=2 then 'average'
+		else 'low'
+		end revenue
+	from (
+		select facs.name as name, ntile(3) over (order by sum(case
+				when memid = 0 then slots * facs.guestcost
+				else slots * membercost
+			end) desc) as class
+		from cd.bookings bks
+		inner join cd.facilities facs
+			on bks.facid = facs.facid
+		group by facs.name
+	) as subq
+order by class, name;
+
+
+select 	facs.name as name,
+	facs.initialoutlay/((sum(case
+			when memid = 0 then slots * facs.guestcost
+			else slots * membercost
+		end)/3) - facs.monthlymaintenance) as months
+	from cd.bookings bks
+	inner join cd.facilities facs
+		on bks.facid = facs.facid
+	group by facs.facid
+order by name;  
+
+
+
+
+SELECT date(b.starttime), AVG(
+  	CASE
+  		WHEN b.memid = 0 THEN b.slots * f.guestcost
+  		ELSE b.slots*f.membercost
+  	END) AS revenue
+FROM cd.bookings b
+JOIN cd.facilities f ON f.facid=b.facid
+GROUP BY date(b.starttime)
+ORDER BY date(b.starttime)
+
+
+
+select 	extract(month from cal.month) as month,
+	(cal.month + interval '1 month') - cal.month as length
+	from
+	(
+		select generate_series(timestamp '2012-01-01', timestamp '2012-12-01', interval '1 month') as month
+	) cal
+order by month;  
