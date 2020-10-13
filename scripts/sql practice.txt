@@ -775,6 +775,39 @@ WITH count AS(
 SELECT DATE(date), count,
   CASE
     WHEN row_number = 1 THEN NULL
-    ELSE to_char((count - LAG(count, 1) OVER())/LAG(count, 1) OVER()::float*100,'990D9%')
+    ELSE to_char((count - LAG(count, 1) OVER())/LAG(count, 1) OVER()::float*100,'90D9%')
   END  AS percent_growth
 FROM count
+
+
+
+CREATE VIEW members_approved_for_voucher AS
+  WITH revenue AS (
+    SELECT s.department_id, m.id, p.price * COUNT(*) AS tot_rev
+    FROM sales s
+    INNER JOIN products p ON p.id = s.product_id
+    INNER JOIN members m ON s.member_id = m.id
+    GROUP BY s.department_id, m.id, p.price
+    ORDER BY s.department_id, m.id
+    ),
+  dept_sales AS(
+    SELECT department_id, SUM(tot_rev) AS rev
+    FROM revenue
+    GROUP BY department_id
+    )
+  
+  SELECT d.department_id, rev.id, SUM(rev.tot_rev) AS rev
+  FROM revenue rev
+  INNER JOIN dept_sales d ON d.department_id = rev.department_id
+  WHERE d.rev > 10000
+  GROUP BY d.department_id, id;
+
+    
+SELECT DISTINCT ON(mem.id, name, email) mem.id, name, email, SUM(mem.rev) AS total_spending
+FROM members_approved_for_voucher mem
+INNER JOIN members m USING (id)
+GROUP BY mem.id, name, email
+HAVING SUM(mem.rev) > 1000
+ORDER BY mem.id;
+    
+  
