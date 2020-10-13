@@ -762,3 +762,19 @@ FROM(SELECT score,
 
 SELECT MIN(r.score), percentile_cont(0.50) WITHIN GROUP (ORDER BY score ASC) AS median, MAX(r.score)
 FROM results r
+
+
+
+WITH count AS(
+  SELECT DATE_TRUNC('month', created_at) AS date, COUNT(*), ROW_NUMBER() OVER()
+  FROM posts
+  GROUP BY DATE_TRUNC('month', created_at)
+  ORDER BY DATE_TRUNC('month', created_at)
+)
+
+SELECT DATE(date), count,
+  CASE
+    WHEN row_number = 1 THEN NULL
+    ELSE to_char((count - LAG(count, 1) OVER())/LAG(count, 1) OVER()::float*100,'990D9%')
+  END  AS percent_growth
+FROM count
