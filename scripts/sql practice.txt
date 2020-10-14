@@ -1,3 +1,14 @@
+SELECT GENERATE_SERIES(starttime, endtime, '1 minute') AS time_minute, 
+				'Kurapika' AS streamer_username, 
+				'Call Of Duty' AS category, 
+				FLOOR(300 + 1000 * RANDOM()) AS concurrent_viewers
+			FROM(
+				SELECT starttime, DATE_TRUNC('minute', starttime + '2 hour'::interval * random()) AS endtime
+				FROM (SELECT DATE_TRUNC('minute', '2018-01-01'::timestamp + '2 year'::interval * random()) AS starttime) start
+				) startend
+
+
+
 SELECT
   DATE(created_at) as day,
   description,
@@ -810,4 +821,17 @@ GROUP BY mem.id, name, email
 HAVING SUM(mem.rev) > 1000
 ORDER BY mem.id;
     
+ 
+WITH minmax AS(
+  SELECT MIN(price_amount) AS min, MAX(price_amount) AS max
+  FROM tutorial.crunchbase_acquisitions),
+  hist AS(
+  SELECT WIDTH_BUCKET(t.price_amount, min, max, 9) AS bucket,
+    INT8RANGE(FLOOR(min)::int, CEIL(max)::int ,'[]') AS range,
+    COUNT(*) AS freq
+  FROM minmax, tutorial.crunchbase_acquisitions t
+  GROUP BY t.price_amount, min, max
+  ORDER BY t.price_amount)
   
+SELECT bucket, range, freq
+FROM hist
