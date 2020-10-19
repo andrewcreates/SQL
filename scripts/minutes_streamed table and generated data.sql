@@ -116,3 +116,53 @@ INSERT INTO minutes_streamed (time_minute, streamer_username, category, concurre
 				) startend
 			) input
 
+
+WITH latest AS(
+	SELECT MAX(time_minute) + ('2 day'::interval * random()) AS next_start, 
+		streamer_username, 
+		category, 
+		CEIL(AVG(concurrent_viewers)) AS avg_concurrent,
+		CEIL(stddev(concurrent_viewers)) AS std_dev_concurrent
+	FROM minutes_streamed
+	GROUP BY category, streamer_username
+	ORDER BY MAX(time_minute)
+	)
+	
+SELECT DATE_TRUNC('minute', GENERATE_SERIES(next_start, next_start + ('3 hours'::interval * random()), '1 minute')) AS time_minute,
+	streamer_username,
+	category,
+	FLOOR(avg_concurrent + (2*RANDOM() - 1) * std_dev_concurrent)
+FROM latest
+WHERE streamer_username = 'Gon' AND category = 'HXH'
+
+
+WITH RECURSIVE series AS(
+	SELECT MAX(time_minute) + ('7 day'::interval * random()) AS next_start,
+		streamer_username,
+		category,
+		CEIL(AVG(concurrent_viewers)) AS avg_concurrent,
+		CEIL(stddev(concurrent_viewers)) AS std_dev_concurrent		
+	FROM minutes_streamed
+	GROUP BY streamer_username, category
+	
+	UNION ALL
+	
+	SELECT next_start  + ('7 day'::interval * random()) AS next_start,
+		streamer_username,
+		category,
+		avg_concurrent,
+		std_dev_concurrent
+	FROM series
+	WHERE next_start < '2018-04-01'::TIMESTAMP
+	
+	)
+
+INSERT INTO minutes_streamed (time_minute, streamer_username, category, concurrent_viewers)
+		SELECT *
+		FROM (
+			SELECT DATE_TRUNC('minute', GENERATE_SERIES(next_start, next_start + ('3 hours'::interval * random()), '1 minute')) AS time_minute,
+					streamer_username,
+					category,
+					FLOOR(avg_concurrent + (4*RANDOM() - 2) * std_dev_concurrent)
+			FROM series
+			WHERE streamer_username = 'Gon' AND category = 'HXH') input
