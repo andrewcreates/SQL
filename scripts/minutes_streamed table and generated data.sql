@@ -7,7 +7,7 @@ CREATE TABLE minutes_streamed (
 	concurrent_viewers int);
 
 CREATE TABLE minutes_viewed (
-	time_minute TIME,
+	time_minute TIMESTAMP,
 	viewer VARCHAR,
 	viewer_country VARCHAR,
 	streamer_username VARCHAR);
@@ -166,6 +166,33 @@ INSERT INTO minutes_streamed (time_minute, streamer_username, category, concurre
 					FLOOR(avg_concurrent + (4*RANDOM() - 2) * std_dev_concurrent)
 			FROM series
 			WHERE streamer_username = 'Gon' AND category = 'HXH') input
+
+
+WITH streams AS(
+		SELECT time_minute, streamer_username, 
+		ROW_NUMBER() OVER(PARTITION BY streamer_username ORDER BY time_minute) AS rn,
+		time_minute - (ROW_NUMBER() OVER(PARTITION BY streamer_username ORDER BY time_minute) || ' minute')::INTERVAL AS grp
+		FROM minutes_streamed
+		GROUP BY time_minute, streamer_username
+		ORDER BY time_minute, streamer_username
+	),
+	groups AS (
+		SELECT grp, streamer_username, MAX(rn) - MIN(rn) AS minutes
+		FROM streams
+		GROUP BY grp, streamer_username
+		ORDER BY grp
+	)
+
+INSERT INTO minutes_viewed (time_minute, viewer, viewer_country, streamer_username)
+	SELECT *
+	FROM(
+		SELECT GENERATE_SERIES(grp, grp + (FLOOR(minutes*random()) || ' minute')::interval,'1 minute'),
+			'Chad' AS viewer,
+			'USA' AS viewer_country,
+			streamer_username
+		FROM groups
+		WHERE streamer_username = 'Gon') input
+
 
 
 Question 2: Write a query that returns a row for each streamer with columns for their total hours streamed (in any category) and percentage of hours streamed in a Call of Duty game category.
