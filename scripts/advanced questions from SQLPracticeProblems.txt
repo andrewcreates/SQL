@@ -2,5 +2,51 @@
 
 Advanced Questions
 
-32. We want to send all of our high-value customers a special VIP gift. We're defining high-value customers as those who've made at least 1 order with a total value (not including the discount) equal to $10,000or more. We only want to consider orders made in the year 2016.
+32. We want to send all of our high-value customers a special VIP gift. We're defining high-value customers as those who've made at least 1 order with a total value (not including the discount) equal to $10,000or more. We only want to consider orders made in the year 1996
 
+SELECT c.customer_id, c.company_name, od.order_id, ROUND(SUM(od.unit_price * od.quantity)::numeric, 2) AS TotalOrderAmount
+FROM customers c
+INNER JOIN orders o ON o.customer_id = c.customer_id
+INNER JOIN order_details od ON od.order_id = o.order_id
+WHERE DATE_TRUNC('year', o.order_date) = '1998-01-01'
+GROUP BY c.customer_id, c.company_name, od.order_id
+HAVING ROUND(SUM(od.unit_price * od.quantity)::numeric, 2) > 10000
+ORDER BY TotalOrderAmount DESC
+
+33. The manager has changed his mind. Instead of requiring that customers have at least one individual orders totaling $10,000or more, he wants to define high-value customers as those who have orders totaling $15,000 or more in 2016. How would you change the answer to the problem above?
+
+SELECT c.customer_id, c.company_name, ROUND(SUM(od.unit_price * od.quantity)::numeric, 2) AS TotalOrderAmount
+FROM customers c
+INNER JOIN orders o ON o.customer_id = c.customer_id
+INNER JOIN order_details od ON od.order_id = o.order_id
+WHERE DATE_TRUNC('year', o.order_date) = '1998-01-01'
+GROUP BY c.customer_id, c.company_name
+HAVING ROUND(SUM(od.unit_price * od.quantity)::numeric, 2) > 15000
+ORDER BY TotalOrderAmount DESC
+
+34. Change the above query to use the discount when calculating high-value customers.Order by the total amount which includes the discount.
+
+SELECT c.customer_id, c.company_name, 
+	ROUND(SUM(od.unit_price * od.quantity)::numeric, 2) AS TotalWithoutDiscount,
+	ROUND(SUM(od.unit_price * od.quantity * (1-od.discount))::numeric, 2) AS TotalWithDiscount
+FROM customers c
+INNER JOIN orders o ON o.customer_id = c.customer_id
+INNER JOIN order_details od ON od.order_id = o.order_id
+WHERE DATE_TRUNC('year', o.order_date) = '1998-01-01'
+GROUP BY c.customer_id, c.company_name
+HAVING ROUND(SUM(od.unit_price * od.quantity * (1-od.discount))::numeric, 2) > 10000
+ORDER BY TotalWithDiscount DESC
+
+35. At the end of the month, salespeople are likely to try much harder to get orders, to meet their month-end quotas. Show all orders madeon the last day of the month. Order by EmployeeID and OrderID
+
+WITH month_ends AS(
+	SELECT GENERATE_SERIES(DATE_TRUNC('month',MIN(order_date)), DATE_TRUNC('month',MAX(order_date)), '1 month'::interval) + '1 month'::INTERVAL - '1 day'::INTERVAL AS months
+	FROM orders
+	)
+
+SELECT o.employee_id, o.order_id, o.order_date
+FROM month_ends m
+JOIN orders o ON o.order_date = m.months
+ORDER BY o.employee_id, o.order_id
+
+36. 
