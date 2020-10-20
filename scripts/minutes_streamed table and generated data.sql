@@ -187,11 +187,11 @@ INSERT INTO minutes_viewed (time_minute, viewer, viewer_country, streamer_userna
 	SELECT *
 	FROM(
 		SELECT GENERATE_SERIES(grp, grp + (FLOOR(minutes*random()) || ' minute')::interval,'1 minute'),
-			'Chad' AS viewer,
-			'USA' AS viewer_country,
+			'Asahi' AS viewer,
+			'Japan' AS viewer_country,
 			streamer_username
 		FROM groups
-		WHERE streamer_username = 'Gon') input
+		WHERE streamer_username = 'Leorio') input
 
 
 
