@@ -66,4 +66,19 @@ SELECT DISTINCT order_id
 FROM order_details
 LIMIT 17
 
-38. 
+38. Janet Leverling, one of the salespeople,has come to you with a request. Shethinks that she accidentally double-entered a line item on an order, with a different ProductID, but the same quantity. She remembers that the quantity was 60 or more. Show all the OrderIDs with line items that match this, in order of OrderID
+
+WITH orders_quantities AS (
+	SELECT o.order_id, o.product_id, o.quantity
+	FROM order_details o
+	--INNER JOIN order_details od ON o.order_id = od.order_id
+	WHERE quantity >= 60
+	GROUP BY o.order_id, o.quantity, o.product_id
+	ORDER BY o.order_id, o.quantity
+	)
+
+SELECT order_id
+FROM orders_quantities o
+GROUP BY o.order_id, o.quantity
+HAVING COUNT(quantity) >= 2
+ORDER BY o.order_id
