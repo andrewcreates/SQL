@@ -82,3 +82,42 @@ FROM orders_quantities o
 GROUP BY o.order_id, o.quantity
 HAVING COUNT(quantity) >= 2
 ORDER BY o.order_id
+
+39. Based on the previous question, we now want to show details of the order, for orders that match the above criteria.
+
+WITH orders_quantities AS (
+		SELECT o.order_id, o.product_id, o.quantity
+		FROM order_details o
+		--INNER JOIN order_details od ON o.order_id = od.order_id
+		WHERE quantity >= 60
+		GROUP BY o.order_id, o.quantity, o.product_id
+		ORDER BY o.order_id, o.quantity
+	),
+	order_dup AS (
+		SELECT order_id
+		FROM orders_quantities o
+		GROUP BY o.order_id, o.quantity
+		HAVING COUNT(quantity) >= 2
+		ORDER BY o.order_id
+	)
+	
+SELECT *
+FROM order_details
+WHERE order_id IN (SELECT * FROM order_dup)
+ORDER BY order_id
+
+40. Here's another way of getting the same results as in the previous problem, using a derived table instead of a CTE. However, there's a bug in this SQL. It returns 20 rows instead of 16. Correct the SQL.
+
+WITH order_dup AS (
+		SELECT order_id
+		FROM order_details
+		WHERE quantity >= 60
+		GROUP BY order_id, quantity
+		HAVING COUNT(*) > 1
+		ORDER BY order_id
+	)
+	
+SELECT *
+FROM order_details
+WHERE order_id IN (SELECT * FROM order_dup)
+ORDER BY order_id
