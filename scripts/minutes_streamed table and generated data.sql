@@ -239,3 +239,11 @@ FROM hours_streamed h
 RIGHT OUTER JOIN months m ON m.month = h.month AND m.name = h.name
 GROUP BY m.month
 ORDER BY m.month
+
+Question 4: for each streamer, columns with average concurrent viewers, total minutes viewed from Japan
+
+SELECT s.streamer_username, FLOOR(AVG(concurrent_viewers)) AS avg_concurrent_viewers, COUNT(v.*) FILTER (WHERE v.viewer_country = 'Japan') AS jpn_mins
+FROM minutes_streamed s
+INNER JOIN minutes_viewed v ON s.streamer_username = v.streamer_username AND s.time_minute = v.time_minute
+GROUP BY s.streamer_username
+ORDER BY s.streamer_username
