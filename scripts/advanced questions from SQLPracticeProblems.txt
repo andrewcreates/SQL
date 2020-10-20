@@ -57,4 +57,13 @@ GROUP BY order_id
 ORDER BY COUNT(*) DESC
 LIMIT 10
 
-37. 
+37. The Northwind mobile app developers would now like to just get a random assortment of orders for beta testing on their app. Show a random set of 2% of all orders.
+
+SELECT CEIL(COUNT(DISTINCT order_id) *0.02)
+FROM order_details
+
+SELECT DISTINCT order_id
+FROM order_details
+LIMIT 17
+
+38. 
