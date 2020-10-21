@@ -131,4 +131,17 @@ FROM orders
 WHERE shipped_date > required_date
 ORDER BY order_id
 
-41. 
+42.  Some salespeople have more orders arriving late than others. Maybe they're not following up on the order process, and need more training. Which salespeople havethe most orders arriving late?
+
+SELECT o.employee_id, e.last_name, COUNT(*) AS TotalLateOrders
+FROM orders o
+INNER JOIN employees e ON e.employee_id = o.employee_id
+WHERE o.order_id IN (
+	SELECT
+		order_id
+	FROM orders
+	WHERE shipped_date >= required_date)
+GROUP BY o.employee_id, e.last_name
+ORDER BY TotalLateOrders DESC
+
+43. 
