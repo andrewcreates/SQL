@@ -121,3 +121,14 @@ SELECT *
 FROM order_details
 WHERE order_id IN (SELECT * FROM order_dup)
 ORDER BY order_id
+
+
+41. Some customers arecomplaining about their orders arriving late. Which orders are late?
+
+SELECT
+	order_id, order_date, required_date, shipped_date
+FROM orders
+WHERE shipped_date > required_date
+ORDER BY order_id
+
+41. 
