@@ -163,3 +163,43 @@ FROM orders o
 INNER JOIN employees e ON e.employee_id = o.employee_id
 GROUP BY o.employee_id, e.last_name
 ORDER BY o.employee_id
+
+45. Continuing on the answer for above query, let's fix the results for row 5 -Buchanan. He should have a 0 instead of a Null in LateOrders.
+
+SELECT o.employee_id, e.last_name, 
+	COUNT(*) AS AllOrders,
+	COUNT(*) FILTER (WHERE o.shipped_date >= o.required_date) AS TotalLateOrders
+FROM orders o
+INNER JOIN employees e ON e.employee_id = o.employee_id
+GROUP BY o.employee_id, e.last_name
+ORDER BY o.employee_id
+
+46. Now we want to get the percentage of late orders over total orders.
+
+WITH order_counts AS(
+	SELECT o.employee_id, e.last_name, 
+		COUNT(*) AS AllOrders,
+		COUNT(*) FILTER (WHERE o.shipped_date >= o.required_date) AS TotalLateOrders
+	FROM orders o
+	INNER JOIN employees e ON e.employee_id = o.employee_id
+	GROUP BY o.employee_id, e.last_name
+	ORDER BY o.employee_id
+	)
+
+SELECT *, to_char(TotalLateOrders::numeric/AllOrders, '990D99%') AS LateOrderPerc
+FROM order_counts
+
+47. So now for the PercentageLateOrders, we get a decimal value like we should. But to make the output easier to read, let's cut the PercentLateOrders off at 2 digits to the right of the decimal point.
+
+WITH order_counts AS(
+	SELECT o.employee_id, e.last_name, 
+		COUNT(*) AS AllOrders,
+		COUNT(*) FILTER (WHERE o.shipped_date >= o.required_date) AS TotalLateOrders
+	FROM orders o
+	INNER JOIN employees e ON e.employee_id = o.employee_id
+	GROUP BY o.employee_id, e.last_name
+	ORDER BY o.employee_id
+	)
+
+SELECT *, to_char(TotalLateOrders::numeric/AllOrders, '990D99%') AS LateOrderPerc
+FROM order_counts
