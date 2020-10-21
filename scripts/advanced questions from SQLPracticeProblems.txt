@@ -144,4 +144,22 @@ WHERE o.order_id IN (
 GROUP BY o.employee_id, e.last_name
 ORDER BY TotalLateOrders DESC
 
-43. 
+43. Andrew, the VP of sales,has been doing some more thinking somemore about the problemof late orders. He realizes that just looking at the number of orders arriving late for each salesperson isn't a good idea. It needs to be compared against the totalnumber of orders per salesperson.
+
+SELECT o.employee_id, e.last_name, 
+	COUNT(*) AS AllOrders,
+	COUNT(*) FILTER (WHERE o.shipped_date >= o.required_date) AS TotalLateOrders
+FROM orders o
+INNER JOIN employees e ON e.employee_id = o.employee_id
+GROUP BY o.employee_id, e.last_name
+ORDER BY o.employee_id
+
+44. There's an employee missing in the answerfrom the problem above. Fix the SQL to show all employees who have taken orders.
+
+SELECT o.employee_id, e.last_name, 
+	COUNT(*) AS AllOrders,
+	COUNT(*) FILTER (WHERE o.shipped_date >= o.required_date) AS TotalLateOrders
+FROM orders o
+INNER JOIN employees e ON e.employee_id = o.employee_id
+GROUP BY o.employee_id, e.last_name
+ORDER BY o.employee_id
