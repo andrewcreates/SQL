@@ -220,7 +220,21 @@ WHERE DATE_TRUNC('year', o.order_date) = '1998-01-01'
 GROUP BY c.customer_id, c.company_name
 ORDER BY c.customer_id
 
-49. 
+49. There's a bug with the answer for the previous question. The CustomerGroup value for one of the rows is null. Fix the SQL so that there are no nulls in the CustomerGroup field.
 
+SELECT c.customer_id, c.company_name, ROUND(SUM(od.unit_price * od.quantity)::numeric, 2) AS TotalOrderAmount,
+	CASE
+		WHEN ROUND(SUM(od.unit_price * od.quantity)::numeric, 2) < 1000 THEN 'Low'
+		WHEN ROUND(SUM(od.unit_price * od.quantity)::numeric, 2) < 5000 THEN 'Medium'
+		WHEN ROUND(SUM(od.unit_price * od.quantity)::numeric, 2) < 10000 THEN 'High'
+		ELSE 'Very High'
+	END AS CustomerGroup
+FROM customers c
+INNER JOIN orders o ON o.customer_id = c.customer_id
+INNER JOIN order_details od ON od.order_id = o.order_id
+WHERE DATE_TRUNC('year', o.order_date) = '1998-01-01'
+GROUP BY c.customer_id, c.company_name
+ORDER BY c.customer_id
 
+50.
 
