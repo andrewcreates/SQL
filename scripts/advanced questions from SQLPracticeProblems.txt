@@ -236,5 +236,28 @@ WHERE DATE_TRUNC('year', o.order_date) = '1998-01-01'
 GROUP BY c.customer_id, c.company_name
 ORDER BY c.customer_id
 
-50.
+50. Based on the above query, show all the defined CustomerGroups, and the percentage in each. Sort by the total in each group, in descending order.
+
+WITH groups AS(
+	SELECT c.customer_id, c.company_name, ROUND(SUM(od.unit_price * od.quantity)::numeric, 2) AS TotalOrderAmount,
+		CASE
+			WHEN ROUND(SUM(od.unit_price * od.quantity)::numeric, 2) < 1000 THEN 'Low'
+			WHEN ROUND(SUM(od.unit_price * od.quantity)::numeric, 2) < 5000 THEN 'Medium'
+			WHEN ROUND(SUM(od.unit_price * od.quantity)::numeric, 2) < 10000 THEN 'High'
+			ELSE 'Very High'
+		END AS CustomerGroup
+	FROM customers c
+	INNER JOIN orders o ON o.customer_id = c.customer_id
+	INNER JOIN order_details od ON od.order_id = o.order_id
+	WHERE DATE_TRUNC('year', o.order_date) = '1998-01-01'
+	GROUP BY c.customer_id, c.company_name
+	ORDER BY c.customer_id
+	)
+
+SELECT CustomerGroup, COUNT(*) AS total, to_char(COUNT(*)::numeric/(SELECT COUNT(*) FROM groups), '990D99%')
+FROM groups
+GROUP BY CustomerGroup
+ORDER BY total DESC
+
+
 
