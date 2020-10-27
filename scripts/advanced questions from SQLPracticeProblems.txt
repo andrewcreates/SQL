@@ -296,26 +296,46 @@ ORDER BY Country
 
 55. Looking at the Orders table—we’d like to show details for each order that was the first in that particular country, ordered by OrderID. So, we need one row per ShipCountry, and CustomerID, OrderID, and OrderDate should be of the first order from that country.
 
-WITH countries AS (
-		SELECT DISTINCT country
-		FROM customers
-		UNION
-		SELECT DISTINCT country
-		FROM suppliers
-		ORDER BY country),
-	orders AS(
-		SELECT countries.country AS ShipCountry, 
+WITH orders AS(
+		SELECT o.ship_country AS ShipCountry, 
 			o.customer_id AS CustomerID, 
 			o.order_id AS OrderID, 
 			o.order_date AS OrderDate,
-			rank() OVER(PARTITION BY countries.country ORDER BY o.order_date ASC)
-		FROM countries 
-		JOIN orders o ON o.ship_country = countries.country
-		ORDER BY Country, OrderDate
+			rank() OVER(PARTITION BY o.ship_country ORDER BY o.order_date ASC)
+		FROM orders o
+		ORDER BY o.ship_country, OrderDate
 		)
 
 SELECT ShipCountry, CustomerID, OrderID, OrderDate
 FROM orders
 WHERE rank = 1
+
+56. There are some customers for whom freight is a major expense when ordering from Northwind. However, by batching up their orders, and making one larger order instead of multiple smaller orders in a short period of time, they could reduce their freight costs significantly. Show those customers who have made more than 1 order in a 5 day period. The sales people will use this to help customers reduce their costs. Note: There are more than one way of solving this kind of problem. For this problem, we will notbe using Window functions. 
+
+WITH initial AS (
+	SELECT o1.customer_id AS CustomerID, 
+		o1.order_id AS InitialOrderID,
+		o1.order_date AS InitialOrderDate,
+		o2.order_id AS NextOrderID,
+		o2.order_date AS NextOrderDate
+	FROM orders o1
+	INNER JOIN orders o2 ON o1.customer_id = o2.customer_id AND o1.order_id != o2.order_id AND o1.order_id < o2.order_id
+	ORDER BY o1.customer_id, o1.order_date
+	)
+SELECT
+CustomerID,
+InitialOrderID,
+InitialOrderDate,
+NextOrderID,
+NextOrderDate,
+NextOrderDate - InitialOrderDate AS DaysBetween
+FROM initial
+GROUP BY CustomerID, InitialOrderID, InitialOrderDate, NextOrderID, NextOrderDate
+HAVING (NextOrderDate - InitialOrderDate) BETWEEN 0 AND 5
+ORDER BY CustomerID, InitialOrderDate
+
+
+
+
 
 
