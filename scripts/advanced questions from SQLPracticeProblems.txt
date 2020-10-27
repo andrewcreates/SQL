@@ -272,4 +272,10 @@ ORDER BY country
 
 53. The employees going on the business trip don’t want just a raw list of countries, they want more details. We’d like to see output like the below, in the Expected Results.
 
+SELECT DISTINCT s.country AS SupplierCountry, c.country AS CustomerCountry
+FROM customers c
+FULL OUTER JOIN suppliers s ON s.country = c.country
+ORDER BY s.country, c.country
+
+
 
