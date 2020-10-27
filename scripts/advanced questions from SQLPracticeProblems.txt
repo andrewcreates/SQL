@@ -334,6 +334,27 @@ GROUP BY CustomerID, InitialOrderID, InitialOrderDate, NextOrderID, NextOrderDat
 HAVING (NextOrderDate - InitialOrderDate) BETWEEN 0 AND 5
 ORDER BY CustomerID, InitialOrderDate
 
+57. There’s another way of solving the problem above, using Window functions.
+
+WITH orders AS (
+	SELECT o1.customer_id AS CustomerID, 
+		o1.order_id AS InitialOrderID,
+		o1.order_date AS InitialOrderDate, 
+		LEAD(o1.order_id, 1) OVER(PARTITION BY o1.customer_id ORDER BY o1.order_date ASC) AS NextOrderID,
+		LEAD(o1.order_date,1) OVER(PARTITION BY o1.customer_id ORDER BY o1.order_date ASC) AS NextOrderDate,
+		(LEAD(o1.order_date,1) OVER(PARTITION BY o1.customer_id ORDER BY o1.order_date ASC) - o1.order_date) AS DaysBetweenOrders
+	FROM orders o1
+	GROUP BY o1.customer_id, o1.order_id, o1.order_date
+	ORDER BY o1.customer_id, o1.order_date
+	)
+
+SELECT *
+FROM orders
+WHERE DaysBetweenOrders BETWEEN 0 AND 5
+
+
+
+
 
 
 
