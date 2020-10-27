@@ -294,6 +294,28 @@ LEFT JOIN customers c ON c.country = countries.country
 GROUP BY countries.country
 ORDER BY Country
 
-55.
+55. Looking at the Orders table—we’d like to show details for each order that was the first in that particular country, ordered by OrderID. So, we need one row per ShipCountry, and CustomerID, OrderID, and OrderDate should be of the first order from that country.
+
+WITH countries AS (
+		SELECT DISTINCT country
+		FROM customers
+		UNION
+		SELECT DISTINCT country
+		FROM suppliers
+		ORDER BY country),
+	orders AS(
+		SELECT countries.country AS ShipCountry, 
+			o.customer_id AS CustomerID, 
+			o.order_id AS OrderID, 
+			o.order_date AS OrderDate,
+			rank() OVER(PARTITION BY countries.country ORDER BY o.order_date ASC)
+		FROM countries 
+		JOIN orders o ON o.ship_country = countries.country
+		ORDER BY Country, OrderDate
+		)
+
+SELECT ShipCountry, CustomerID, OrderID, OrderDate
+FROM orders
+WHERE rank = 1
 
 
