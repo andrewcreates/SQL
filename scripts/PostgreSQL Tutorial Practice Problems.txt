@@ -12,8 +12,11 @@ ORDER BY: Select all distinct customer_id, company_name, contact_name and order 
 WHERE: Select all customer_id, company_name, contact_name where country is Japan
 LIMIT: SELECT top 10 customers by spending
 FETCH: SELECT top 10 customers by spending
-GROUP BY: SELECT employee_id, total revenue brought in. GROUP BY employee_id
+GROUP BY sets: SELECT employee_id, total revenue brought in. GROUP BY employee_id
 HAVING: SELECT employee_id, total revenue brought in. GROUP BY employee_id. HAVING total revenue greater than 10,000
+
+JOINS:
+
 INNER JOIN: SELECT employee_id, total revenue brought in. GROUP BY employee_id
 LEFT JOIN: Are there any employees that have not brought in revenue? Could narrow focus to specific months or years
 FULL OUTER JOIN: employee_id, customer_id, are there people who haven't provided any revenue to the company?
@@ -21,5 +24,31 @@ CROSS JOIN: SELECT all produts and cross join all customers, add spending
 UNION: SELECT all suppliers, names UNION all shippers, names
 INTERSECT: show the intersect of customers who have bought products from category 1 and category 2
 EXCEPT: show all customers who have purchased from category 1 except those who live in Japan
+NATURAL JOIN
+
+IN:
+BETWEEN:
+LIKE:
+IS NULL:
+
+CUBE:
+
+ROLLUP:
+
+ANY:
+ALL:
+EXISTS:
+
+Database management:
+INSERT:
+INSERT multiple:
+UPDATE:
+UPDATE JOIN:
+DELETE:
+DELETE JOIN:
+Upsert:
+
+
+Advanced:
 
 Recursion:show managers and all direct reports chain.
