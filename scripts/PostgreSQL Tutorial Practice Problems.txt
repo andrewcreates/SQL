@@ -7,8 +7,15 @@ Fundamentals:
 SELECT statement with clauses:
 
 SELECT: Select all customer_id, company_name, contact_name
-SELECT DISTINCT: Select all distinct customer_id, company_name, contact_name
+	SELECT customer_id, company_name, contact_name
+	FROM customers
+	ORDER BY customer_id;
+SELECT DISTINCT: Select all distinct customer_id from orders
+	SELECT DISTINCT ON (customer_id) customer_id, order_id, employee_id
+	FROM orders
+	ORDER BY customer_id, order_id, employee_id;
 ORDER BY: Select all distinct customer_id, company_name, contact_name and order by contact_name
+	
 WHERE: Select all customer_id, company_name, contact_name where country is Japan
 LIMIT: SELECT top 10 customers by spending
 FETCH: SELECT top 10 customers by spending
@@ -26,18 +33,17 @@ INTERSECT: show the intersect of customers who have bought products from categor
 EXCEPT: show all customers who have purchased from category 1 except those who live in Japan
 NATURAL JOIN
 
-IN:
-BETWEEN:
-LIKE:
-IS NULL:
+IN: SELECT employee_id that were hired in 1965
+BETWEEN: SELECT employee_id that were hired in 1965
+LIKE: SELECT employee_id that have first names that start with 'Da' or end with 'a'
+IS NULL: Are there anyn employees that have not produced revenue?
+ANY: SELECT employee_id that were hired after the first hired employee
+ALL: SELECT employee_id that were hired in 1965. Not hired in 1965.
+EXISTS: 
+NOT EXISTS: 
 
-CUBE:
-
-ROLLUP:
-
-ANY:
-ALL:
-EXISTS:
+CUBE: GROUPING by city, region, postal_code, country
+ROLLUP: GROUPING by city, region, postal_code, country. How do these results differ from CUBE?
 
 Database management:
 INSERT:
