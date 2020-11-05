@@ -26,7 +26,19 @@ WHERE: Select all customer_id, company_name, contact_name where country is Germa
 	FROM customers
 	WHERE country = 'Germany'
 LIMIT: SELECT top 10 customers by spending
+	SELECT o.customer_id, ROUND(SUM(od.unit_price * od.quantity * (1-od.discount))::numeric,2) AS total_spending
+	FROM orders o
+	INNER JOIN order_details od ON od.order_id = o.order_id
+	GROUP BY customer_id
+	ORDER BY total_spending DESC
+	LIMIT 10
 FETCH: SELECT top 10 customers by spending
+	SELECT o.customer_id, ROUND(SUM(od.unit_price * od.quantity * (1-od.discount))::numeric,2) AS total_spending
+	FROM orders o
+	INNER JOIN order_details od ON od.order_id = o.order_id
+	GROUP BY customer_id
+	ORDER BY total_spending DESC
+	FETCH NEXT 10 ROW ONLY
 GROUP BY sets: SELECT employee_id, total revenue brought in. GROUP BY employee_id
 HAVING: SELECT employee_id, total revenue brought in. GROUP BY employee_id. HAVING total revenue greater than 10,000
 
