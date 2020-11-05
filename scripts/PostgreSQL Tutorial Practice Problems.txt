@@ -14,9 +14,17 @@ SELECT DISTINCT: Select all distinct customer_id from orders
 	SELECT DISTINCT ON (customer_id) customer_id, order_id, employee_id
 	FROM orders
 	ORDER BY customer_id, order_id, employee_id;
-ORDER BY: Select all distinct customer_id, company_name, contact_name and order by contact_name
-	
-WHERE: Select all customer_id, company_name, contact_name where country is Japan
+ORDER BY: Which supplier has the most purchased products
+	SELECT p.supplier_id, s.company_name, COUNT(p.product_id)
+	FROM products p
+	INNER JOIN order_details o ON o.product_id = p.product_id
+	INNER JOIN suppliers s ON s.supplier_id = p.supplier_id
+	GROUP BY p.supplier_id, s.company_name
+	ORDER BY COUNT(p.product_id) DESC;	
+WHERE: Select all customer_id, company_name, contact_name where country is Germany
+	SELECT customer_id, company_name, contact_name
+	FROM customers
+	WHERE country = 'Germany'
 LIMIT: SELECT top 10 customers by spending
 FETCH: SELECT top 10 customers by spending
 GROUP BY sets: SELECT employee_id, total revenue brought in. GROUP BY employee_id
